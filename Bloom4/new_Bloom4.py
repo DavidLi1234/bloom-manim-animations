@@ -315,7 +315,7 @@ class OutsourcingScene(BaseBloomScene):
             font_size=30,
         )
         caption_time = 3.0
-        visuals_time = 4.0
+        visuals_time = 6.0
 
         cro_box = RoundedRectangle(width=2.8, height=1.4, corner_radius=0.12)
         cro_box.set_stroke("#3da5ff", width=3)
@@ -373,7 +373,7 @@ class OutsourcingScene(BaseBloomScene):
             visuals_anim,
         )
         self.fade_out_all(run_time=0.25)
-        self.wait(0.25)
+        self.wait(2.25)
 
 
 class TrendsOverviewScene(BaseBloomScene):
@@ -446,7 +446,7 @@ class TrendsOverviewScene(BaseBloomScene):
 
 class TrendPrecisionScene(BaseBloomScene):
     def construct(self):
-        total_time = 8.0
+        total_time = 8.5
         used = 0.0
         self.wait(0.5)
         used += 0.5
@@ -456,6 +456,7 @@ class TrendPrecisionScene(BaseBloomScene):
             "requiring CROs to improve capabilities.",
             font_size=30,
         )
+        caption_time = 4.5
         dna = dna_helix(height=9, width=1.6, turns=3, stroke_width=7).rotate(PI / 2).move_to(DOWN * 0.3)
         strands = dna[0]
         connectors = dna[1]
@@ -482,19 +483,29 @@ class TrendPrecisionScene(BaseBloomScene):
         biomarker_label = Text("Biomarkers", font_size=28, color="#ff4d4d")
         biomarker_label.next_to(biomarker_arrows, DOWN, buff=0.2)
 
-        self.play(
-            Write(sentence),
+        arrow_anims = [FadeIn(arrow, run_time=0.35) for arrow in biomarker_arrows]
+        visuals_anim = Succession(
             AnimationGroup(
                 Create(strands[0]),
                 Create(strands[1]),
                 FadeIn(connectors),
-                FadeIn(biomarker_arrows),
-                FadeIn(biomarker_label),
-                lag_ratio=0.1,
+                run_time=2.5,
             ),
-            run_time=1.2,
+            *arrow_anims,
+            FadeIn(biomarker_label, run_time=0.5),
         )
-        used += 1.2
+        visuals_anim.set_run_time(caption_time)
+
+        self.play(
+            Write(sentence, run_time=caption_time),
+            visuals_anim,
+            run_time=caption_time,
+        )
+        used += caption_time
+
+        extra_hold = 1.0
+        self.wait(extra_hold)
+        used += extra_hold
 
         remaining = max(total_time - used - 0.6, 0)
         if remaining > 0:
@@ -505,50 +516,69 @@ class TrendPrecisionScene(BaseBloomScene):
 
 class TrendDigitalScene(BaseBloomScene):
     def construct(self):
-        total_time = 6.0
+        total_time = 7.0
         used = 0.0
-        self.wait(0.5)
-        used += 0.5
+        self.wait(0.75)
+        used += 0.75
 
-        sentence = make_sentence(
-            "Next, CROs that adopt digital tools will fix patient enrollment bottlenecks and run trials remotely.",
+        sentence = Text(
+            "Next, CROs that adopt digital tools will\n"
+            "fix patient enrollment bottlenecks and run\n"
+            "trials remotely.",
             font_size=30,
+            color=PRIMARY_COLOR,
         )
-        funnel = Polygon(LEFT * 1.4 + UP * 0.8, RIGHT * 1.4 + UP * 0.8, RIGHT * 0.4 + DOWN * 0.8, LEFT * 0.4 + DOWN * 0.8)
-        funnel.set_stroke(PRIMARY_COLOR, width=2)
-        funnel.set_fill(opacity=0)
-        funnel.shift(LEFT * 2.2 + DOWN * 0.6)
+        sentence.to_edge(UP, buff=0.5)
+        caption_time = 3.0
+        visuals_time = 4.5
 
-        dots = VGroup(*[Dot(radius=0.06, color=PRIMARY_COLOR) for _ in range(6)])
-        for i, dot in enumerate(dots):
-            dot.move_to(funnel.get_top() + DOWN * (0.25 + 0.08 * i))
-        self.play(Write(sentence), FadeIn(funnel), FadeIn(dots), run_time=0.6)
-        used += 0.6
-        self.play(Wiggle(funnel, scale_value=1.02), run_time=0.5)
-        used += 0.5
+        map_box = RoundedRectangle(
+            width=6.6,
+            height=4.3,
+            corner_radius=0.4,
+            stroke_color="#7ecbff",
+            stroke_width=2,
+            fill_color="#7ecbff",
+            fill_opacity=0.15,
+        ).shift(DOWN * 1.2)
+        map_center = map_box.get_center()
+        hub = Circle(radius=0.32, color=ACCENT_COLOR, fill_opacity=1, stroke_width=0).move_to(map_center)
+        nodes = VGroup()
+        for pos in [
+            LEFT * 2.4 + UP * 0.6,
+            RIGHT * 2.4 + UP * 0.3,
+            LEFT * 1.8 + DOWN * 1.4,
+            RIGHT * 2.1 + DOWN * 1.2,
+            UP * 1.0,
+        ]:
+            dot = Dot(map_center + pos, color=PRIMARY_COLOR, radius=0.1)
+            nodes.add(dot)
+        links = VGroup(*[Line(hub.get_center(), n.get_center(), stroke_color=ACCENT_COLOR, stroke_width=2) for n in nodes])
+        links.set_opacity(0.7)
 
-        phone = make_phone().scale(1.1).move_to(LEFT * 0.2 + DOWN * 0.6)
-        waves = make_signal_waves().scale(0.7).next_to(phone, RIGHT, buff=0.1)
-        lane = Line(funnel.get_top() + RIGHT * 1.2, funnel.get_bottom() + RIGHT * 1.2).set_stroke(PRIMARY_COLOR, width=2)
-        self.play(FadeIn(phone), FadeIn(waves), Create(lane), run_time=0.6)
-        used += 0.6
+        icons = VGroup(
+            Text("Mobile", color=PRIMARY_COLOR).scale(0.55).next_to(map_box, DOWN, buff=0.25).shift(LEFT * 1.8),
+            Text("Home", color=PRIMARY_COLOR).scale(0.55).next_to(map_box, DOWN, buff=0.25),
+            Text("Video", color=PRIMARY_COLOR).scale(0.55).next_to(map_box, DOWN, buff=0.25).shift(RIGHT * 1.8),
+        )
+        hospital = Text("Hospital", color=PRIMARY_COLOR).scale(0.6).next_to(map_box, UP, buff=0.25).set_opacity(0.6)
 
-        for dot in dots:
-            self.play(dot.animate.move_to(lane.get_bottom() + UP * 0.2), run_time=0.3)
-            used += 0.3
+        visual_anim = Succession(
+            FadeIn(map_box, run_time=0.6),
+            AnimationGroup(FadeIn(nodes, lag_ratio=0.05), FadeIn(hub)),
+            Create(links, lag_ratio=0.1, run_time=0.8),
+            AnimationGroup(FadeIn(icons, lag_ratio=0.1), FadeIn(hospital)),
+        )
+        visual_anim.set_run_time(visuals_time)
 
-        hub = Circle(radius=0.3).set_stroke(PRIMARY_COLOR, width=2).set_fill(opacity=0)
-        hub_label = Text("CRO", font_size=18, color=PRIMARY_COLOR).move_to(hub)
-        hub_group = VGroup(hub, hub_label).move_to(RIGHT * 2.4 + DOWN * 0.3)
-        houses = VGroup(*[make_house().shift(RIGHT * 2.4 + DOWN * 0.3) for _ in range(4)])
-        houses.arrange_in_grid(rows=2, cols=2, buff=0.6).shift(RIGHT * 3.6 + UP * 0.3)
-        spokes = VGroup(*[Line(hub_group.get_center(), house.get_center()) for house in houses]).set_stroke(PRIMARY_COLOR, width=2)
-        network = VGroup(hub_group, houses, spokes)
+        self.play(
+            Write(sentence, run_time=caption_time),
+            visual_anim,
+            run_time=visuals_time,
+        )
+        used += visuals_time
 
-        self.play(FadeIn(network), FadeOut(VGroup(funnel, dots, phone, waves, lane)), run_time=0.8)
-        used += 0.8
-
-        remaining = max(total_time - used - 0.6, 0)
+        remaining = max(total_time - used - 0.5, 0)
         if remaining > 0:
             self.wait(remaining)
         self.fade_out_all(run_time=0.25)
@@ -566,61 +596,70 @@ class TrendAutomationScene(BaseBloomScene):
             "Finally, as trial costs rise, automation and AI are becoming essential to making drug development faster and more efficient.",
             font_size=30,
         )
-        chart_axes = VGroup(
-            Line(LEFT * 1.6 + DOWN * 1.2, LEFT * 1.6 + UP * 1.2),
-            Line(LEFT * 1.6 + DOWN * 1.2, RIGHT * 1.6 + DOWN * 1.2),
-        ).set_stroke(PRIMARY_COLOR, width=2)
-        cost_line = VMobject()
-        cost_line.set_points_as_corners(
-            [
-                LEFT * 1.6 + DOWN * 1.2,
-                LEFT * 0.6 + DOWN * 0.4,
-                RIGHT * 0.2 + UP * 0.3,
-                RIGHT * 1.4 + UP * 1.0,
+        cro_box = RoundedRectangle(width=3.0, height=1.6, corner_radius=0.25)
+        cro_box.set_stroke("#2d6cff", width=2)
+        cro_box.set_fill("#2d6cff", opacity=0.2)
+        cro_label = Text("CRO", font_size=26, color=WHITE).move_to(cro_box)
+        cro_group = VGroup(cro_box, cro_label).move_to(DOWN * 0.6)
+
+        input_nodes = VGroup(*[Circle(radius=0.18) for _ in range(3)])
+        input_nodes.arrange(DOWN, buff=0.55).move_to(LEFT * 2.4)
+        input_nodes.set_stroke("#1a1a1a", width=2)
+        input_nodes.set_fill("#f5c14d", opacity=1)
+
+        hidden_nodes = VGroup(*[Circle(radius=0.18) for _ in range(4)])
+        hidden_nodes.arrange(DOWN, buff=0.45).move_to(ORIGIN)
+        hidden_nodes.set_stroke("#1a1a1a", width=2)
+        hidden_nodes.set_fill("#f5c14d", opacity=1)
+
+        input_to_hidden = VGroup(
+            *[
+                Line(a.get_center(), b.get_center())
+                for a in input_nodes
+                for b in hidden_nodes
             ]
         )
-        cost_line.set_stroke(HIGHLIGHT_COLOR, width=3)
-        chart = VGroup(chart_axes, cost_line).shift(LEFT * 2.5 + DOWN * 0.4)
+        connections = VGroup(input_to_hidden)
+        connections.set_stroke("#1a1a1a", width=5)
 
-        self.play(Write(sentence), Create(chart_axes), Create(cost_line), run_time=1.0)
-        used += 1.0
+        network = VGroup(connections, input_nodes, hidden_nodes)
+        network.move_to(LEFT * 3.4 + DOWN * 0.6)
 
-        conveyor = Line(LEFT * 0.8, RIGHT * 2.2).set_stroke(PRIMARY_COLOR, width=2)
-        conveyor.shift(DOWN * 1.4)
-        dots = VGroup(*[Dot(radius=0.05, color=PRIMARY_COLOR) for _ in range(4)])
-        for i, dot in enumerate(dots):
-            dot.move_to(conveyor.get_left() + RIGHT * (0.4 * i))
-        self.play(Create(conveyor), FadeIn(dots), run_time=0.6)
-        used += 0.6
+        gear = ImageMobject("gear.png").set_height(2.3).move_to(RIGHT * 3.5 + DOWN * 0.6)
 
-        gear = make_gear().move_to(RIGHT * 2.6 + DOWN * 1.3)
-        ai_tag = RoundedRectangle(width=0.6, height=0.3, corner_radius=0.06)
-        ai_text = Text("AI", font_size=18, color=PRIMARY_COLOR).move_to(ai_tag)
-        ai_tag.set_stroke(PRIMARY_COLOR, width=2)
-        ai_badge = VGroup(ai_tag, ai_text).next_to(gear, UP, buff=0.2)
+        intro_time = 2.5
+        def spin_updater(mob, dt):
+            mob.rotate(PI * dt)
 
-        self.play(FadeIn(gear), FadeIn(ai_badge), run_time=0.6)
-        used += 0.6
-
-        self.play(Rotate(gear, angle=PI / 2), run_time=0.6)
-        used += 0.6
-
-        path = Line(conveyor.get_left(), conveyor.get_right())
-        flow = AnimationGroup(
-            *[MoveAlongPath(dot, path) for dot in dots],
-            lag_ratio=0.15,
-            run_time=0.8,
+        gear.add_updater(spin_updater)
+        self.play(
+            Write(sentence, run_time=intro_time),
+            FadeIn(cro_group),
+            Create(connections),
+            FadeIn(input_nodes),
+            FadeIn(hidden_nodes),
+            FadeIn(gear),
+            run_time=intro_time,
         )
-        self.play(flow)
-        used += 0.8
+        used += intro_time
 
-        time_label = Text("10y", font_size=26, color=PRIMARY_COLOR).move_to(RIGHT * 2.6 + UP * 0.2)
-        self.play(FadeIn(time_label), run_time=0.4)
-        used += 0.4
-        self.play(Transform(time_label, Text("7y", font_size=24, color=PRIMARY_COLOR).move_to(time_label)), run_time=0.4)
-        used += 0.4
-        self.play(Transform(time_label, Text("5y", font_size=22, color=PRIMARY_COLOR).move_to(time_label)), run_time=0.4)
-        used += 0.4
+        spin_time = 0.8
+        self.wait(spin_time)
+        used += spin_time
+
+        pull_time = 2.3
+        self.play(
+            network.animate.move_to(cro_group).scale(0.2),
+            gear.animate.move_to(cro_group).scale(0.2),
+            cro_group.animate.scale(2.0),
+            run_time=pull_time,
+        )
+        used += pull_time
+
+        absorb_time = 0.3
+        self.play(FadeOut(network), FadeOut(gear), run_time=absorb_time)
+        used += absorb_time
+        gear.remove_updater(spin_updater)
 
         remaining = max(total_time - used - 0.6, 0)
         if remaining > 0:
